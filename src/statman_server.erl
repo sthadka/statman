@@ -8,7 +8,8 @@
 -behaviour(gen_server).
 
 -export([start_link/1, start_link/2, start_link/3,
-         add_subscriber/1, remove_subscriber/1, report/0]).
+         add_subscriber/1, remove_subscriber/1, report/0,
+         get_report_interval/0, set_report_interval/1]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
@@ -36,6 +37,12 @@ add_subscriber(Ref) ->
 remove_subscriber(Ref) ->
     gen_server:call(?MODULE, {remove_subscriber, Ref}).
 
+get_report_interval() ->
+    gen_server:call(?MODULE, get_report_interval).
+
+set_report_interval(ReportInterval) ->
+    gen_server:call(?MODULE, {set_report_interval, ReportInterval}).
+
 report() ->
     ?MODULE ! report.
 
@@ -62,8 +69,12 @@ init([ReportInterval, StartSubscribers, GcInterval]) ->
 handle_call({add_subscriber, Ref}, _From, #state{subscribers = Sub} = State) ->
     {reply, ok, State#state{subscribers = [Ref | Sub]}};
 handle_call({remove_subscriber, Ref}, _From, #state{subscribers = Sub} = State) ->
-    {reply, ok, State#state{subscribers = lists:delete(Ref, Sub)}}.
-
+    {reply, ok, State#state{subscribers = lists:delete(Ref, Sub)}};
+handle_call(get_report_interval, _From,
+            #state{report_interval = ReportInterval} = State) ->
+    {reply, ReportInterval, State};
+handle_call({set_report_interval, ReportInterval}, _From, State) ->
+    {reply, ok, State#state{report_interval = ReportInterval}}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
