@@ -79,6 +79,9 @@ handle_call({set_report_interval, ReportInterval}, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info(report, #state{subscribers = []} = State) ->
+    erlang:send_after(State#state.report_interval, self(), report),
+    {noreply, State};
 handle_info(report, #state{report_interval = Window} = State) ->
     erlang:send_after(State#state.report_interval, self(), report),
 
